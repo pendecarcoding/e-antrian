@@ -9,14 +9,14 @@
 namespace App\Controllers;
 use App\Models\LayarModel;
 
-class Layar extends \App\Controllers\BaseController
+class Layanan extends \App\Controllers\BaseController
 {
 	public function __construct() {
 		
 		parent::__construct();
 		
 		$this->model = new LayarModel;	
-		$this->data['site_title'] = 'Layar Monitor Antrian';
+		$this->data['site_title'] = 'Antrian';
 		$this->addJs ( $this->config->baseURL . 'public/themes/modern/js/layar-ambil-antrian.js' );
 		$this->addJs ( $this->config->baseURL . 'public/themes/modern/js/layar-monitor.js' );
 	}
@@ -24,6 +24,17 @@ class Layar extends \App\Controllers\BaseController
 	public function index()
 	{
 		$this->hasPermissionPrefix('read');
+		if (!empty($_POST['delete'])) 
+		{
+			$this->hasPermission('delete_all', true);
+			$result = $this->model->deleteData();
+			
+			if ($result) {
+				$this->data['message'] = ['status' => 'ok', 'message' => 'Data tujuan berhasil dihapus'];
+			} else {
+				$this->data['message'] = ['status' => 'error', 'message' => 'Data tujuan gagal dihapus'];
+			}
+		}
 		
 		$this->data['antrian_kategori'] = $this->model->getAllSettingLayar();
 		$this->view('layar-antrian-result.php', $this->data);
@@ -32,20 +43,99 @@ class Layar extends \App\Controllers\BaseController
 	public function antrian() {
 		$this->hasPermissionPrefix('read');
 		
+		$user = $this->session->get('user');
+		
 		// $this->setKategori();
 		if (!empty($_GET['id'])) {
 			$this->show_layar_antrian();
 		} else {
+			if (!empty($_POST['delete'])) 
+		{
+			$this->hasPermission('delete_all', true);
+			$result = $this->model->deleteData();
+			
+			if ($result) {
+				$this->data['message'] = ['status' => 'ok', 'message' => 'Data tujuan berhasil dihapus'];
+			} else {
+				$this->data['message'] = ['status' => 'error', 'message' => 'Data tujuan gagal dihapus'];
+			}
+		}
 			$this->data['setting_layar'] = $this->model->getAllSettingLayar();
 			$data = $this->model->getAllTujuan();
+	        $kategori = $this->model->getKategoriByUserId($this->session->get('user')['id_user']);
+	        $layanan  = $this->model->getLayananByUserId($this->session->get('user')['id_user']);
 			foreach ($data as $val) {
 				$tujuan[$val['id_setting_layar']][] = $val['nama_antrian_tujuan'];
 			}
+			$this->addStyle ("https://cdn.ckeditor.com/ckeditor5/44.1.0/ckeditor5.css");
+			$this->addJs("https://cdn.ckeditor.com/ckeditor5/44.1.0/ckeditor5.umd.js");
 			$this->data['tujuan'] = $tujuan;
-			$this->view('layar-antrian-result.php', $this->data);
+			$this->data['kategori'] = $kategori;
+			$this->data['layanan'] = $layanan;
+			$this->view('layar-layanan-result.php', $this->data);
 		}
 	}
+
+	public function add() 
+	{
+		
+		if (!empty($_POST['id'])) {
+			$this->setEdit();
+		} else {
+			$this->addStyle ("https://cdn.ckeditor.com/ckeditor5/44.1.0/ckeditor5.css");
+			$this->addJs("https://cdn.ckeditor.com/ckeditor5/44.1.0/ckeditor5.umd.js");
+			$kategori = $this->model->getKategoriByUserId($this->session->get('user')['id_user']);
+			$this->data['kategori'] = $kategori;
+			$this->data['breadcrumb']['Add'] = '';
+			$this->data['title'] = 'Tambah Data Layanan';
+		}
+
+		$data['message'] = [];
+		if (isset($_POST['submit'])) 
+		{
+			$this->saveData();
+			if ($this->data['message']['status'] == 'ok') {
+				$this->setEdit();
+				$this->data['result'] = $this->model->getLayananById($this->data['id']);
+			}
+		}
+		
+		$this->view('layar-layanan-form.php', $this->data);
+	}
+
+	public function edit()
+	{
+		$this->hasPermissionPrefix('update');
 	
+		$this->addStyle ("https://cdn.ckeditor.com/ckeditor5/44.1.0/ckeditor5.css");
+		$this->addJs("https://cdn.ckeditor.com/ckeditor5/44.1.0/ckeditor5.umd.js");
+		$kategori = $this->model->getKategoriByUserId($this->session->get('user')['id_user']);
+		$this->data['kategori'] = $kategori;
+			$this->data['breadcrumb']['Add'] = '';
+			$this->data['title'] = 'Tambah Data Layanan';
+		
+		if (empty($_GET['id'])) {
+			$this->errorDataNotFound();
+		}
+		
+		$id = !empty($_POST['id']) ? $_POST['id'] : $_GET['id'];
+		
+		// Submit
+		$this->data['message'] = [];
+		if (isset($_POST['submit'])) 
+		{
+			$this->saveData();
+		}
+		
+		$this->data['breadcrumb']['Edit'] = '';
+		$this->data['id'] = $id;
+		$this->data['result'] = $this->model->getLayananById($id);
+		if (empty($this->data['result'])) {
+			$this->errorDataNotFound();
+		}
+		
+		$this->view('layar-layanan-form.php', $this->data);
+	}
 	
 	private function setKategori() {
 		
@@ -211,7 +301,37 @@ class Layar extends \App\Controllers\BaseController
 		    echo view('themes/modern/layar-antrian-show-layanan-detail.php', $this->data);
 	}
 
-
-
+	private function saveData() 
+	{
+		$form_errors = $this->validateForm();
+							
+		if ($form_errors) {
+			$this->data['message']['status'] = 'error';
+			$this->data['message']['content'] = $form_errors;
+		} else {
+			
+			$message = $this->model->saveData();
+			$this->data = array_merge($this->data, $message);
+		}
+	}
+	private function validateForm() {
 	
+		$validation =  \Config\Services::validation();
+		if (empty($_POST['id'])) {
+			$validation->setRule('nama_layanan', 'Nama Layanan', 'trim|required|');
+		}
+		$validation->withRequest($this->request)->run();
+		$form_errors = $validation->getErrors();
+				
+		return $form_errors;
+	}
+
+	private function setEdit() {
+		$this->data['title'] = 'Edit Data Layanan';
+		$this->data['breadcrumb']['Edit'] = '';
+		unset($this->data['breadcrumb']['Add']);
+		if (!empty($_POST['id'])) {
+			$this->data['id'] = $_POST['id'];
+		}
+	}
 }

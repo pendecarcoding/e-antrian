@@ -59,8 +59,36 @@ button.close {
 .bootbox-body {
 	color: #212529;
 }
+.callout {
+    border-radius: .25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.24);
+    background-color: #fff;
+    border-left: 5px solid #4e49e0;
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+.callout-list{
+
+}
+.ambil-antrian {
+    width: 200px;
+    height: 50px;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 18px !important;
+    margin: 10px;
+    display: flex !important;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-direction: column;
+    border-radius: 10px;
+    color: #FFFFFF !important;
+}
 /*-- Bootbox */
 </style>
+
 
 <script type="text/javascript" src="<?=$config->baseURL . 'public/vendors/jquery/jquery.min.js?r='.time()?>"></script>
 <script type="text/javascript" src="<?=$config->baseURL . 'public/vendors/bootstrap/js/bootstrap.min.js?r='.time()?>"></script>
@@ -124,35 +152,33 @@ window.onload = function() {
 				</div>
 			</div>
 		</header>
-		<div class="content-container">
-			<div class="ambil-antrian-container">
-				<h1 class="title">Ambil Antrian</h1>
-				<div class="button-container">
-					
-					<?php
-					// echo '<pre>'; print_r($antrian_detail); die;
-					// $list_background = ['#9e26fb', '#00cf85', '#ee4e57', '#308ded', '#ff9541'];
-					$index = 0;
-					foreach ($antrian_kategori as $val) {
-						?>
-						<!-- <div class="card card-list-kategori ambil-antrian" data-id-antrian-kategori="<?php echo $val['id_antrian_kategori'] ?> "> -->
-						<a href="<?php echo $config->baseURL.'layar/show-layar-antrian-detail?id='.$val['id_antrian_kategori']?>" ><div class="card card-list-kategori ambil-antrian">
-						    <?php if(!empty($val['logo']))
-								echo '<center><img class="img-antrian-logo" src="'.$config->baseURL . 'public/images/logo/' .$val['logo'].'" alt=""></center>';
-							?>
-							<div class="name-kategori"><?php echo $val['nama_antrian_kategori']; ?></div>
-					    </div>
-					    </a>
-						<?php
-						//echo '<button style="background:' . $list_background[$index] . '" class="btn ambil-antrian" data-id-antrian-kategori="' . $val['id_antrian_kategori'] . '"><span>' . $val['nama_antrian_kategori'] . '</span></button>';
-						$index++;
-						
-						
-					}
-					?>
-				</div>
-			</div>
-		</div>
+		<div class="col-md-12" style="color:black">
+            <div class="card card-default">
+              <div class="card-header">
+			  <a style="float:right" href="javascript:history.back()" class="btn btn-danger"><i class="fa fa-times"></i></a>
+
+                <h3 class="card-title">
+                  <i class="fas fa-bullhorn"></i>
+                  <?php echo $detail_layanan['nama_layanan'] ?>
+                </h3>
+              </div>
+              <!-- /.card-header -->
+              <div class="card-body">
+				<?php echo $detail_layanan['description'] ?>
+				<hr>
+				<br>
+				<button class="btn btn-warning ambil-antrian" data-id-antrian-kategori="<?php echo $detail_layanan['id_antrian_kategori'] ?> ">
+					AMBIL ANTRIAN
+</button>
+				<br>
+				<hr>
+               
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+		
 		<footer>
 			<div><?=$setting['text_footer']?></div>
 		</footer>

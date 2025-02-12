@@ -114,6 +114,34 @@ class LayarModel extends \App\Models\BaseModel
 		$result = $this->db->query($sql)->getResultArray();
 		return $result;
 	}
+
+	public function getAntrianKategoriById($id) {
+		$sql = 'SELECT * FROM setting_layar_detail
+				LEFT JOIN antrian_kategori USING(id_antrian_kategori)
+				WHERE id_antrian_kategori= ?';
+		$result = $this->db->query($sql,$id)->getRowArray();
+		return $result;
+	}
+
+	public function getAntrianLayananByIdKategori($id) {
+		$sql = 'SELECT * FROM setting_layar_detail
+				LEFT JOIN antrian_kategori USING(id_antrian_kategori) 
+				JOIN antrian_layanan 
+				on antrian_kategori.id_antrian_kategori = antrian_layanan.id_antrian_kategori
+				WHERE antrian_kategori.id_antrian_kategori= ?';
+		$result = $this->db->query($sql,$id)->getResultArray();
+		return $result;
+	}
+
+	public function getDetailLayananByIdKategori($id){
+		$sql = 'SELECT * FROM setting_layar_detail
+				LEFT JOIN antrian_kategori USING(id_antrian_kategori) 
+				JOIN antrian_layanan 
+				on antrian_kategori.id_antrian_kategori = antrian_layanan.id_antrian_kategori
+				WHERE antrian_layanan.id= ?';
+		$result = $this->db->query($sql,$id)->getRowArray();
+		return $result;
+	}
 	
 	public function getAntrianKategoriAktif() {
 
@@ -218,6 +246,78 @@ class LayarModel extends \App\Models\BaseModel
 				ORDER BY waktu_panggil DESC';
 				
 		$result = $this->db->query($sql, (int) $id)->getResultArray();
+		return $result;
+	}
+
+	public function getKategoriByUserId($id){
+
+
+		$sql = 'SELECT * FROM `antrian_kategori` 
+		JOIN antrian_detail ON antrian_kategori.id_antrian_kategori = antrian_detail.id_antrian_kategori 
+		JOIN user_antrian_detail ON antrian_detail.id_antrian_detail = user_antrian_detail.id_antrian_detail
+		WHERE id_user = ?';
+
+		$result = $this->db->query($sql, (int) $id)->getResultArray();
+		return $result;
+
+		
+	}
+	public function saveData() {
+
+		$data_db['nama_layanan'] = $_POST['nama_layanan'];
+		$data_db['id_antrian_kategori'] = $_POST['kategori'];
+		$data_db['description'] = $_POST['description'];
+		$query = false;
+		if (isset($_POST['id']) && !empty($_POST['id'])) 
+		{
+			$query = $this->db->table('antrian_layanan')->update($data_db, ['id' => $_POST['id']]);			
+
+		} else {
+			$query = $this->db->table('antrian_layanan')->insert($data_db);
+			$result['id'] = '';
+			if ($query) {
+				$result['id'] = $this->db->insertID();
+			}
+		}
+		
+		if ($query) {
+			$result['message']['status'] = 'ok';
+			$result['message']['content'] = 'Data berhasil disimpan';
+		} else {
+			$result['message']['status'] = 'error';
+			$result['message']['content'] = 'Data gagal disimpan';
+		}
+		
+		return $result;
+	}
+
+	public function getLayananByUserId($id){
+		$sql = 'SELECT * FROM `antrian_layanan` 
+		JOIN antrian_kategori 
+		ON antrian_layanan.id_antrian_kategori = antrian_kategori.id_antrian_kategori 
+		JOIN antrian_detail 
+		ON antrian_kategori.id_antrian_kategori = antrian_detail.id_antrian_kategori 
+		JOIN user_antrian_detail 
+		ON antrian_detail.id_antrian_detail = user_antrian_detail.id_antrian_detail 
+		WHERE id_user = ? GROUP BY id';
+		$result = $this->db->query($sql, (int) $id)->getResultArray();
+		return $result;
+	}
+
+	public function getLayananById($id) {
+		$sql = 'SELECT * FROM `antrian_layanan` 
+		JOIN antrian_kategori 
+		ON antrian_layanan.id_antrian_kategori = antrian_kategori.id_antrian_kategori 
+		JOIN antrian_detail 
+		ON antrian_kategori.id_antrian_kategori = antrian_detail.id_antrian_kategori 
+		JOIN user_antrian_detail 
+		ON antrian_detail.id_antrian_detail = user_antrian_detail.id_antrian_detail 
+		WHERE id = ?';
+		$result = $this->db->query($sql, (int) $id)->getRowArray();
+		return $result;
+	}
+	public function deleteData() {
+		$result = $this->db->table('antrian_layanan')->delete(['id' => $_POST['id']]);
 		return $result;
 	}
 }
